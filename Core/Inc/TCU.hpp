@@ -43,17 +43,21 @@ namespace TCU{
 	static void check_pressure(){
 		bool completed = false;
 		bool timeout = false;
+		bool retry_transmit = false;
 		uint64_t check_start = Time::get_global_tick();
 
 		while(!completed && !timeout){
+			retry_transmit = false;
 			if(I2C::transmit_next_packet_polling(i2c_handler_id, *check_order_packet)){
-				while(!completed && !timeout){
+				while(!completed && !timeout && !retry_transmit){
 					if(I2C::receive_next_packet_polling(i2c_handler_id, *check_ready_packet)){
 						receive_i2c_order[0] = *check_ready_packet->get_data();
 						if((receive_i2c_order[0] & I2C_SENSOR_BUSY_MASK) == 0){
 							if(I2C::receive_next_packet_polling(i2c_handler_id, *receive_order_packet)){
 								receive_i2c_order = receive_order_packet->get_data();
 								completed = true;
+							}else{
+								retry_transmit = true;
 							}
 						}
 					}
@@ -69,6 +73,6 @@ namespace TCU{
 		i2c_handler_id = I2C::inscribe(I2C::i2c2);
 
 		STLIB::start();
-		Time::register_mid_precision_alarm(1000000,check_pressure);
+		Time::register_low_precision_alarm(100,check_pressure);
 	}
 }

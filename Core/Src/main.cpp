@@ -16,6 +16,8 @@ int main(void)
 
 void Error_Handler(void)
 {
-	ErrorHandler("HAL error handler triggered");
-	while (1){}
+	//ErrorHandler("HAL error handler triggered");
+	//while (1){}
 }
+
+
