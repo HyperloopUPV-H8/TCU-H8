@@ -296,6 +296,6 @@ unordered_map<I2C::Peripheral, I2C::Instance*> I2C::available_i2cs = {
 	{I2C::i2c2, &I2C::instance2}
 };
 unordered_map<uint32_t, uint32_t> I2C::available_speed_frequencies = {
-	{100, 0x60404E72}
+	{100, 0x60404E72}, {40, 0x80307BFF}
 };
 #endif

@@ -3,10 +3,11 @@
 
 #include "ST-LIB.hpp"
 #include "Runes/Runes.hpp"
+#include "TCU.hpp"
 
 int main(void)
 {
-	STLIB::start();
+	TCU::start();
 
 	while(1) {
 		STLIB::update();
