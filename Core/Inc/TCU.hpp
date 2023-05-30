@@ -3,7 +3,7 @@
 
 namespace TCU{
 
-#define MAX_UINT64 (uint64_t) 18446744073709551615
+#define MAX_UINT64 18446744073709551615U
 
 #define I2C_SENSOR_BUSY_MASK 0x20
 #define I2C_SENSOR_ID 0x28
@@ -11,7 +11,7 @@ namespace TCU{
 #define PRESSURE_SENSOR_MIN_BARS 0.0
 #define PRESSURE_SENSOR_MAX_OUTPUT 15099494.0
 #define PRESSURE_SENSOR_MIN_OUTPUT 1677722.0
-#define SENSOR_READ_TIMEOUT_NANOSECONDS 10 //doesn t work if higher than tim23 time period before overflow
+#define SENSOR_READ_TIMEOUT_NANOSECONDS 40000000 //doesn t work if higher than tim23 time period before overflow
 
 
 	static uint8_t i2c_handler_id = 0;
@@ -45,9 +45,9 @@ namespace TCU{
 		bool timeout = false;
 		uint64_t check_start = Time::get_global_tick();
 
-		while(!completed || timeout){
+		while(!completed && !timeout){
 			if(I2C::transmit_next_packet_polling(i2c_handler_id, *check_order_packet)){
-				while(!completed || timeout){
+				while(!completed && !timeout){
 					if(I2C::receive_next_packet_polling(i2c_handler_id, *check_ready_packet)){
 						receive_i2c_order[0] = *check_ready_packet->get_data();
 						if((receive_i2c_order[0] & I2C_SENSOR_BUSY_MASK) == 0){
