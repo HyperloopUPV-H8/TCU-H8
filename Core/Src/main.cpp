@@ -10,7 +10,7 @@ int main(void)
 	TCU::start();
 
 	while(1) {
-		STLIB::update();
+		TCU::update();
 	}
 }
 
