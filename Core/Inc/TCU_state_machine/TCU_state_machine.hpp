@@ -2,6 +2,7 @@
 #include "ST-LIB.hpp"
 #include "TCU_leds/TCU_leds.hpp"
 #include "TCU_pressure_sensor/TCU_pressure_sensor.hpp"
+#include "TCU_ethernet/TCU_ethernet_udp.hpp"
 using namespace std::chrono_literals;
 
 
@@ -41,7 +42,13 @@ bool initial_operational_check(){
 
 bool operational_fault_check(){
 	double pressure = pressure_sensor::get_pressure();
-	return pressure < MIN_PRESSURE_FAULT || pressure > MAX_PRESSURE_FAULT;
+	if(pressure < MIN_PRESSURE_FAULT || pressure > MAX_PRESSURE_FAULT){
+		return true;
+	}
+	if(pressure_sensor::get_communication_fault()){
+		return true;
+	}
+	return false;
 }
 
 bool idle_over_check(){
@@ -64,11 +71,12 @@ bool under_idle_check(){
 
 void entry_operational(){
 	pressure_sensor::check_pressure();
-	leds::operational_led.turn_on();
+	leds::operational_led->turn_on();
 }
 
 void entry_fault(){
-	leds::fault_led.turn_on();
+	leds::turn_off_all();
+	leds::fault_led->turn_on();
 }
 
 
@@ -91,6 +99,7 @@ void add_entry(){
 
 void add_cyclic(){
 	PrincipalStateMachine.add_low_precision_cyclic_action(pressure_sensor::check_pressure, 10ms,OPERATIONAL);
+	PrincipalStateMachine.add_low_precision_cyclic_action(ethernet::send_sensor_variables, 16ms,OPERATIONAL);
 }
 
 void init(){
@@ -116,6 +125,10 @@ void board_start(){
 
 void update(){
 	PrincipalStateMachine.check_transitions();
+}
+
+void force_fault(){
+	PrincipalStateMachine.force_change_state(FAULT);
 }
 
 }
