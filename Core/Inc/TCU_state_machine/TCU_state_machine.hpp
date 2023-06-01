@@ -3,6 +3,7 @@
 #include "TCU_leds/TCU_leds.hpp"
 #include "TCU_pressure_sensor/TCU_pressure_sensor.hpp"
 #include "TCU_ethernet/TCU_ethernet_udp.hpp"
+#include "TCU_ethernet/TCU_ethernet_tcp.hpp"
 using namespace std::chrono_literals;
 
 
@@ -98,8 +99,8 @@ void add_entry(){
 }
 
 void add_cyclic(){
-	PrincipalStateMachine.add_low_precision_cyclic_action(pressure_sensor::check_pressure, 10ms,OPERATIONAL);
-	PrincipalStateMachine.add_low_precision_cyclic_action(ethernet::send_sensor_variables, 16ms,OPERATIONAL);
+	PrincipalStateMachine.add_low_precision_cyclic_action(pressure_sensor::set_pending_communication, 10ms,OPERATIONAL);
+	PrincipalStateMachine.add_low_precision_cyclic_action(ethernet::set_pending_communication, 16ms,OPERATIONAL);
 }
 
 void init(){

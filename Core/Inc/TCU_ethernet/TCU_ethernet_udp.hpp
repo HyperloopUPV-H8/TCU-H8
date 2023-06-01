@@ -1,25 +1,24 @@
 #pragma once
-#include "ST-LIB.hpp"
-#include "TCU_pressure_sensor/TCU_pressure_sensor.hpp"
+#include "TCU_ethernet/TCU_ethernet_common.hpp"
 
 namespace ethernet{
 
-#define TCU_IP "192.168.1.4"
-#define BACKEND_IP "192.168.1.3"
 #define UDP_PORT 50400
-
-#define PRESSURE_PACKET_ID 303
-#define TEMPERATURE_PACKET_ID 304
 
 DatagramSocket *backend_connection;
 double *pressure;
 double *temperature;
+bool pending_communication = false;
+
+
+inline void set_pending_communication(){pending_communication=true;}
+inline bool communication_is_pending(){return pending_communication;}
 
 void start_datagram_socket(){
 	backend_connection = new DatagramSocket(TCU_IP,UDP_PORT,BACKEND_IP,UDP_PORT);
 }
 
-void send_to_backend(Packet& packet){
+void send_udp_to_backend(Packet& packet){
 	backend_connection->send(packet);
 }
 
@@ -30,6 +29,7 @@ void send_sensor_variables(){
 	*temperature = pressure_sensor::get_temperature();
 	StackPacket<8,double> temperature_packet(TEMPERATURE_PACKET_ID,temperature);
 	backend_connection->send(temperature_packet);
+	pending_communication = false;
 }
 
 }
