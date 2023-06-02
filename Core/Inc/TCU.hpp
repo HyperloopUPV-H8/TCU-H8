@@ -10,9 +10,7 @@ namespace TCU{
 		leds::inscribe();
 		STLIB::start(TCU_IP);
 		state_machine::init();
-		if(!pressure_sensor::setup_communication()){
-			state_machine::force_fault();
-		}
+		pressure_sensor::setup_communication();
 		ethernet::start_datagram_socket();
 		ethernet::start_server_socket();
 		state_machine::board_start();
@@ -21,7 +19,7 @@ namespace TCU{
 	static void update(){
 		STLIB::update();
 		state_machine::update();
-		if(pressure_sensor::communication_is_pending())pressure_sensor::check_pressure();
+		if(pressure_sensor::communication_is_pending() && state_machine::is_operational())pressure_sensor::check_sensor();
 		if(ethernet::communication_is_pending())ethernet::send_sensor_variables();
 	}
 }

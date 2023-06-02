@@ -14,11 +14,21 @@ namespace pressure_sensor {
 #define PRESSURE_SENSOR_MIN_BARS 0.0
 #define PRESSURE_SENSOR_MAX_OUTPUT 15099494.0
 #define PRESSURE_SENSOR_MIN_OUTPUT 1677722.0
-#define SENSOR_SETUP_TIMEOUT_NANOSECONDS 5000000000
-#define SENSOR_READ_TIMEOUT_NANOSECONDS 20000000
-#define SENSOR_WAIT_BETWEEN_I2C_PACKETS_NANOSECONDS 4000000
+#define SENSOR_SETUP_TIMEOUT_MILLISECONDS 5000
+#define SENSOR_READ_TIMEOUT_MILLISECONDS 200
+#define SENSOR_PACKET_DELAY_MILLISECONDS 25
+#define SENSOR_PERIOD_BETWEEN_READS_MILLISECONDS 200
 #define MAX_CLONED_ARRAY_COUNT 5
 
+
+enum check_sensor_states{
+	STARTING,
+	SENDING_ORDER,
+	WAITING_FLAG,
+	READING_SENSOR,
+	FINISHED,
+	RESET,
+};
 
 uint8_t i2c_handler_id = 0;
 uint8_t check_i2c_order_size = 3;
@@ -34,7 +44,13 @@ double pressure_in_bars = -1.0;
 double temperature_in_degrees = -274.0;
 uint8_t last_order_array[] = {0,0,0,0,0,0,0};
 uint8_t cloned_order_array_counter = 0;
+
+uint64_t sensor_packet_counter = 0;
+uint8_t check_sensor_state = STARTING;
+uint8_t timeout_handler_id = 0;
 bool pending_communication = false;
+bool packet_ready = false;
+bool timed_out = false;
 bool failed_communication = false;
 
 
@@ -43,6 +59,8 @@ inline double get_temperature(){return temperature_in_degrees;}
 inline bool get_communication_fault(){return failed_communication && COMMUNICATION_PROTECTION;}
 
 inline void set_pending_communication(){pending_communication=true;}
+inline void set_packet_ready(){packet_ready = true;}
+inline void set_timed_out(){timed_out = true;}
 inline bool communication_is_pending(){return pending_communication;}
 
 
@@ -53,33 +71,6 @@ void calculate_pressure_temperature() {
 	pressure_in_bars = ((receive_i2c_order[3] * 1.0 + receive_i2c_order[2] * 256.0 + receive_i2c_order[1] * 65536.0) - PRESSURE_SENSOR_MIN_OUTPUT)
 		* (PRESSURE_SENSOR_MAX_BARS - PRESSURE_SENSOR_MIN_BARS) / (PRESSURE_SENSOR_MAX_OUTPUT - PRESSURE_SENSOR_MIN_OUTPUT) + PRESSURE_SENSOR_MIN_BARS;
 	temperature_in_degrees = ((receive_i2c_order[6] * 1.0 + receive_i2c_order[5] * 256.0 + receive_i2c_order[4] * 65536.0));
-}
-
-
-/**
- * @brief	works as a delay and checks if the value received as a parameter happened more than
- * 			SENSOR_READ_TIMEOUT_NANOSECONDS ago
- * @param check_start 	Clock_value drawn by Time::get_global_tick() to compare with the actual time
- * @retval 	if check_start happened more than SENSOR_WAIT_BETWEEN_I2C_PACKETS_NANOSECONDS before the actual clock value.
- */
-bool check_pressure_timeout(uint64_t check_start) {
-	uint64_t timeout_start = Time::get_global_tick();
-	uint64_t now = Time::get_global_tick();
-	while(1){
-		now = Time::get_global_tick();
-		if(now < timeout_start){
-			if(MAX_UINT64 - timeout_start + now > SENSOR_WAIT_BETWEEN_I2C_PACKETS_NANOSECONDS)break;
-		}else{
-			if(now - timeout_start > SENSOR_WAIT_BETWEEN_I2C_PACKETS_NANOSECONDS)break;
-		}
-
-	}
-
-	if (now < check_start) {
-		return MAX_UINT64 - check_start + now > SENSOR_READ_TIMEOUT_NANOSECONDS;
-	} else {
-		return now - check_start > SENSOR_READ_TIMEOUT_NANOSECONDS;
-	}
 }
 
 
@@ -112,40 +103,66 @@ bool check_array(){
  * 			Timeout SENSOR_READ_TIMEOUT_NANOSECONDS happens before receiving the packet (normally when channel is not properly set)
  * 			Exactly same information repeated MAX_CLONED_ARRAY_COUNT times (happens when sensor is broken)
  */
-bool check_pressure() {
-	bool completed = false;
-	bool timeout = false;
-	bool retry_transmit = false;
-	uint64_t check_start = Time::get_global_tick();
+void check_sensor(){
+	if(!pending_communication){return;}
+	if(check_sensor_state == STARTING){
+		timeout_handler_id = Time::register_low_precision_alarm(SENSOR_READ_TIMEOUT_MILLISECONDS, [&](){set_timed_out();printf("timed out trying to communicate with TCU sensors \n");});
+		check_sensor_state = SENDING_ORDER;
+	}
+	if(check_sensor_state == RESET){
+		HAL_I2C_DeInit(I2C::active_i2c[i2c_handler_id]->hi2c);
+		HAL_I2C_Init(I2C::active_i2c[i2c_handler_id]->hi2c);
 
-	while (!completed && !timeout) {
-		retry_transmit = false;
-		if(I2C::transmit_next_packet_polling(i2c_handler_id,*check_order_packet)){
-		while (!completed && !timeout && !retry_transmit) {
-			if (I2C::receive_next_packet_polling(i2c_handler_id,*check_ready_packet)) {
-				receive_i2c_order[0] = *check_ready_packet->get_data();
-				if ((receive_i2c_order[0] & I2C_SENSOR_BUSY_MASK) == 0) {
-					if (I2C::receive_next_packet_polling(i2c_handler_id,*receive_order_packet)) {
-						receive_i2c_order = receive_order_packet->get_data();
-						completed = true;
-					} else {
-						retry_transmit = true;
+		check_sensor_state = SENDING_ORDER;
+	}
+
+	if(packet_ready){
+		switch(check_sensor_state){
+			case SENDING_ORDER:
+				if(I2C::transmit_next_packet_polling(i2c_handler_id,*check_order_packet)){
+					check_sensor_state = WAITING_FLAG;
+					}else{
+						check_sensor_state = RESET;
 					}
+			break;
+			case WAITING_FLAG:
+				if (I2C::receive_next_packet_polling(i2c_handler_id,*check_ready_packet)) {
+					receive_i2c_order[0] = *check_ready_packet->get_data();
+					if ((receive_i2c_order[0] & I2C_SENSOR_BUSY_MASK) == 0) {
+						check_sensor_state = READING_SENSOR;
+						}
+					}else{
+						check_sensor_state = RESET;
+					}
+
+			break;
+			case READING_SENSOR:
+				if (I2C::receive_next_packet_polling(i2c_handler_id,*receive_order_packet)) {
+					receive_i2c_order = receive_order_packet->get_data();
+					calculate_pressure_temperature();
+					check_sensor_state = FINISHED;
+				}else{
+					check_sensor_state = RESET;
 				}
-			}
-			timeout = check_pressure_timeout(check_start);
+			break;
+			case FINISHED:
+				if(check_array()){
+					printf("Received too many copied values from the sensor, its not making new readings. Entering FAULT state \n");
+					failed_communication = true;
+					Time::unregister_low_precision_alarm(timeout_handler_id);
+					return;
+				}
+				pending_communication = false;
+				Time::unregister_low_precision_alarm(timeout_handler_id);
+				check_sensor_state = STARTING;
+			break;
 		}
+		packet_ready = false;
+		if(timed_out && check_sensor_state != FINISHED){
+			printf("wait time until TCU sensors responds with values expired. Entering FAULT state \n");
+			failed_communication = true;
 		}
-		timeout = check_pressure_timeout(check_start);
 	}
-	if(completed){
-		calculate_pressure_temperature();
-	}else{
-		printf("wait time until TCU sensors responds with values expired, going into FAULT state \n");
-		failed_communication = true;
-	}
-	pending_communication = false;
-	return completed;
 }
 
 
@@ -162,25 +179,22 @@ void inscribe(){
  * 			used on TCU::start() so the board stays on INITIAL state until communication is properly set
  * @retval	return wether or not setup_communication was successful
  */
-bool setup_communication(){
-	uint64_t setup_start = Time::get_global_tick();
-	auto check_setup_timeout = [&](){
-		uint64_t now = Time::get_global_tick();
-		if(now < setup_start){
-			return (MAX_UINT64 - setup_start + now > SENSOR_SETUP_TIMEOUT_NANOSECONDS);
-		}else{
-			return (now - setup_start > SENSOR_SETUP_TIMEOUT_NANOSECONDS);
-		}
-		return true;
-	};
-	while(!check_setup_timeout()){
-		if(check_pressure()){
-			failed_communication = false;
-			return true;
+void setup_communication(){
+	check_sensor_state = SENDING_ORDER;
+	pending_communication = true;
+	uint8_t timeout_alarm = Time::register_low_precision_alarm(SENSOR_SETUP_TIMEOUT_MILLISECONDS, [&](){set_timed_out();printf("failed to communicate with TCU sensor in start up \n");});
+	uint8_t check_sensor_alarm = Time::register_low_precision_alarm(SENSOR_PACKET_DELAY_MILLISECONDS, [&](){
+		packet_ready = true;
+
+	});
+	while(check_sensor_state != FINISHED){
+		check_sensor();
+		if(timed_out){
+			break;
 		}
 	}
-	printf("setup failed as the TCU couldn t establish communication with the TCU sensors, going into FAULT state");
-	return false;
+	Time::unregister_low_precision_alarm(timeout_alarm);
+	Time::unregister_low_precision_alarm(check_sensor_alarm);
 }
 
 

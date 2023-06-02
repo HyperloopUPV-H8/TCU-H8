@@ -6613,7 +6613,7 @@ static HAL_StatusTypeDef I2C_IsErrorOccurred(I2C_HandleTypeDef *hi2c, uint32_t T
               /* Process Unlocked */
               __HAL_UNLOCK(hi2c);
               
-              status = HAL_ERROR;
+              return HAL_ERROR;
             }
           }
         }

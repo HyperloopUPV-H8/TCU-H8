@@ -71,7 +71,6 @@ bool under_idle_check(){
 //##########################-----entry methods-----###############################
 
 void entry_operational(){
-	pressure_sensor::check_pressure();
 	leds::operational_led->turn_on();
 }
 
@@ -99,8 +98,9 @@ void add_entry(){
 }
 
 void add_cyclic(){
-	PrincipalStateMachine.add_low_precision_cyclic_action(pressure_sensor::set_pending_communication, 10ms,OPERATIONAL);
 	PrincipalStateMachine.add_low_precision_cyclic_action(ethernet::set_pending_communication, 16ms,OPERATIONAL);
+	PrincipalStateMachine.add_low_precision_cyclic_action(pressure_sensor::set_pending_communication, std::chrono::milliseconds(SENSOR_PERIOD_BETWEEN_READS_MILLISECONDS),OPERATIONAL);
+	PrincipalStateMachine.add_low_precision_cyclic_action(pressure_sensor::set_packet_ready, std::chrono::milliseconds(SENSOR_PACKET_DELAY_MILLISECONDS),OPERATIONAL);
 }
 
 void init(){
@@ -126,10 +126,15 @@ void board_start(){
 
 void update(){
 	PrincipalStateMachine.check_transitions();
+	PumpStateMachine.check_transitions();
 }
 
 void force_fault(){
 	PrincipalStateMachine.force_change_state(FAULT);
+}
+
+bool is_operational(){
+	return PrincipalStateMachine.current_state == OPERATIONAL;
 }
 
 }
