@@ -1,5 +1,6 @@
 #pragma once
 #include "ST-LIB.hpp"
+#include "TCU_common/TCU_common.hpp"
 
 namespace pressure_sensor {
 
@@ -19,12 +20,6 @@ namespace pressure_sensor {
 #define SENSOR_PACKET_DELAY_MILLISECONDS 5
 #define SENSOR_PERIOD_BETWEEN_READS_MILLISECONDS 500
 #define MAX_CLONED_ARRAY_COUNT 5
-
-#define IDEAL_PRESSURE 1.0
-#define MIN_PRESSURE_PUMP 0.9
-#define MAX_PRESSURE_PUMP 1.1
-#define MIN_PRESSURE_FAULT 0.8
-#define MAX_PRESSURE_FAULT 1.2
 
 
 enum check_sensor_states{

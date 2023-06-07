@@ -16,19 +16,6 @@ StateMachine PumpStateMachine;
 bool ended_setup = false;
 bool initial_timeout = false;
 
-//####################-----enum of states-----###########################
-
-enum principal_state_machine_states{
-	INITIAL,
-	OPERATIONAL,
-	FAULT,
-};
-
-enum pump_state_machine_states{
-	IDLE,
-	OVER,
-	UNDER,
-};
 
 //####################-----check transition methods-----###########################
 
@@ -52,20 +39,12 @@ bool initial_fault_check(){
 	return pressure_sensor::get_communication_fault() || initial_timeout;
 }
 
-bool idle_over_check(){
+bool under_over_check(){
 	return pressure_sensor::get_pressure() > MAX_PRESSURE_PUMP;
 }
 
-bool over_idle_check(){
+bool over_under_check(){
 	return pressure_sensor::get_pressure() <= IDEAL_PRESSURE;
-}
-
-bool idle_under_check(){
-	return pressure_sensor::get_pressure() < MIN_PRESSURE_PUMP;
-}
-
-bool under_idle_check(){
-	return pressure_sensor::get_pressure() >= IDEAL_PRESSURE;
 }
 
 //##########################-----entry methods-----###############################
@@ -84,36 +63,35 @@ void entry_fault(){
 
 
 void add_transitions(){
-	PrincipalStateMachine.add_transition(OPERATIONAL,FAULT,operational_fault_check);
-	PrincipalStateMachine.add_transition(INITIAL,OPERATIONAL,initial_operational_check);
-	PrincipalStateMachine.add_transition(INITIAL,FAULT,initial_fault_check);
-	PumpStateMachine.add_transition(IDLE,OVER,idle_over_check);
-	PumpStateMachine.add_transition(OVER,IDLE,over_idle_check);
-	PumpStateMachine.add_transition(IDLE,UNDER,idle_under_check);
-	PumpStateMachine.add_transition(UNDER,IDLE,under_idle_check);
+	PrincipalStateMachine.add_transition(common::OPERATIONAL,common::FAULT,operational_fault_check);
+	PrincipalStateMachine.add_transition(common::INITIAL,common::OPERATIONAL,initial_operational_check);
+	PrincipalStateMachine.add_transition(common::INITIAL,common::FAULT,initial_fault_check);
+	PumpStateMachine.add_transition(common::UNDER,common::OVER,under_over_check);
+	PumpStateMachine.add_transition(common::OVER,common::UNDER,over_under_check);
 }
 
 void add_entry(){
-	PrincipalStateMachine.add_enter_action(entry_fault, FAULT);
-	PrincipalStateMachine.add_enter_action(entry_operational, OPERATIONAL);
+	PrincipalStateMachine.add_enter_action(entry_fault, common::FAULT);
+	PrincipalStateMachine.add_enter_action(entry_operational, common::OPERATIONAL);
 }
 
 void add_cyclic(){
-	PrincipalStateMachine.add_low_precision_cyclic_action(ethernet::set_pending_communication, 16ms,OPERATIONAL);
-	PrincipalStateMachine.add_low_precision_cyclic_action(pressure_sensor::set_pending_communication, std::chrono::milliseconds(SENSOR_PERIOD_BETWEEN_READS_MILLISECONDS),OPERATIONAL);
-	PrincipalStateMachine.add_low_precision_cyclic_action(pressure_sensor::set_packet_ready, std::chrono::milliseconds(SENSOR_PACKET_DELAY_MILLISECONDS),OPERATIONAL);
+	Time::register_low_precision_alarm(16, ethernet::set_pending_communication);
+	//PrincipalStateMachine.add_low_precision_cyclic_action(ethernet::set_pending_communication, 16ms,common::OPERATIONAL);
+	PrincipalStateMachine.add_low_precision_cyclic_action(pressure_sensor::set_pending_communication, std::chrono::milliseconds(SENSOR_PERIOD_BETWEEN_READS_MILLISECONDS),common::OPERATIONAL);
+	PrincipalStateMachine.add_low_precision_cyclic_action(pressure_sensor::set_packet_ready, std::chrono::milliseconds(SENSOR_PACKET_DELAY_MILLISECONDS),common::OPERATIONAL);
 }
 
 void init(){
-	PrincipalStateMachine.add_state(INITIAL);
-	PrincipalStateMachine.add_state(OPERATIONAL);
-	PrincipalStateMachine.add_state(FAULT);
-	ProtectionManager::link_state_machine(PrincipalStateMachine, FAULT);
+	PrincipalStateMachine.add_state(common::INITIAL);
+	PrincipalStateMachine.add_state(common::OPERATIONAL);
+	PrincipalStateMachine.add_state(common::FAULT);
+	ProtectionManager::link_state_machine(PrincipalStateMachine, common::FAULT);
 	ProtectionManager::set_id(Boards::ID::TCU);
-	PumpStateMachine.add_state(IDLE);
-	PumpStateMachine.add_state(OVER);
-	PumpStateMachine.add_state(UNDER);
-	PrincipalStateMachine.add_state_machine(PumpStateMachine, OPERATIONAL);
+	PumpStateMachine.add_state(common::IDLE);
+	PumpStateMachine.add_state(common::OVER);
+	PumpStateMachine.add_state(common::UNDER);
+	PrincipalStateMachine.add_state_machine(PumpStateMachine, common::OPERATIONAL);
 	add_transitions();
 	add_entry();
 	add_cyclic();
@@ -124,7 +102,7 @@ void init(){
 void board_start(){
 	ended_setup = true;
 	Time::set_timeout(TCP_CONNECTION_TIMEOUT_MILLISECONDS, [&](){
-		if(PrincipalStateMachine.current_state == INITIAL){
+		if(PrincipalStateMachine.current_state == common::INITIAL){
 			initial_timeout = true;
 		}
 	});
@@ -135,12 +113,13 @@ void update(){
 	PumpStateMachine.check_transitions();
 }
 
-void force_fault(){
-	PrincipalStateMachine.force_change_state(FAULT);
+bool is_operational(){
+	return PrincipalStateMachine.current_state == common::OPERATIONAL;
 }
 
-bool is_operational(){
-	return PrincipalStateMachine.current_state == OPERATIONAL;
+
+void force_fault(){
+	PrincipalStateMachine.force_change_state(common::FAULT);
 }
 
 }
