@@ -1,18 +1,18 @@
 #pragma once
 #include "TCU_ethernet/TCU_ethernet_common.hpp"
 
-namespace ethernet{
 
-#define UDP_PORT 50400
+namespace ethernet{
 
 DatagramSocket *backend_connection;
 double *pressure;
 double *temperature;
+uint8_t *state;
 bool pending_communication = false;
 
 
-inline void set_pending_communication(){pending_communication=true;}
-inline bool communication_is_pending(){return pending_communication;}
+void set_pending_communication(){pending_communication=true;}
+bool communication_is_pending(){return pending_communication;}
 
 void start_datagram_socket(){
 	backend_connection = new DatagramSocket(TCU_IP,UDP_PORT,BACKEND_IP,UDP_PORT);

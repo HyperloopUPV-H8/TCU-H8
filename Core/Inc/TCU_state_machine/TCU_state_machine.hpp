@@ -9,17 +9,12 @@ using namespace std::chrono_literals;
 
 namespace state_machine{
 
-#define IDEAL_PRESSURE 1.0
-#define MIN_PRESSURE_PUMP 0.9
-#define MAX_PRESSURE_PUMP 1.1
-#define MIN_PRESSURE_FAULT 0.8
-#define MAX_PRESSURE_FAULT 1.2
-
 //######################-----variables-----#############################
 StateMachine PrincipalStateMachine;
 StateMachine PumpStateMachine;
 
 bool ended_setup = false;
+bool initial_timeout = false;
 
 //####################-----enum of states-----###########################
 
@@ -37,19 +32,24 @@ enum pump_state_machine_states{
 
 //####################-----check transition methods-----###########################
 
-bool initial_operational_check(){
-	return ended_setup;
-}
-
 bool operational_fault_check(){
-	double pressure = pressure_sensor::get_pressure();
-	if(pressure < MIN_PRESSURE_FAULT || pressure > MAX_PRESSURE_FAULT){
+	if(pressure_sensor::check_pressure_limits()){
+		ErrorHandler("pressure on tube got over the safe limits, entering FAULT state");
 		return true;
 	}
 	if(pressure_sensor::get_communication_fault()){
+		ErrorHandler("Lost communication with TCU sensors, entering FAULT state");
 		return true;
 	}
 	return false;
+}
+
+bool initial_operational_check(){
+	return ended_setup && ethernet::is_connected();
+}
+
+bool initial_fault_check(){
+	return pressure_sensor::get_communication_fault() || initial_timeout;
 }
 
 bool idle_over_check(){
@@ -86,6 +86,7 @@ void entry_fault(){
 void add_transitions(){
 	PrincipalStateMachine.add_transition(OPERATIONAL,FAULT,operational_fault_check);
 	PrincipalStateMachine.add_transition(INITIAL,OPERATIONAL,initial_operational_check);
+	PrincipalStateMachine.add_transition(INITIAL,FAULT,initial_fault_check);
 	PumpStateMachine.add_transition(IDLE,OVER,idle_over_check);
 	PumpStateMachine.add_transition(OVER,IDLE,over_idle_check);
 	PumpStateMachine.add_transition(IDLE,UNDER,idle_under_check);
@@ -122,6 +123,11 @@ void init(){
 
 void board_start(){
 	ended_setup = true;
+	Time::set_timeout(TCP_CONNECTION_TIMEOUT_MILLISECONDS, [&](){
+		if(PrincipalStateMachine.current_state == INITIAL){
+			initial_timeout = true;
+		}
+	});
 }
 
 void update(){

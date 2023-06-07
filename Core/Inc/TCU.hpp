@@ -8,11 +8,11 @@ namespace TCU{
 	static void start(){
 		pressure_sensor::inscribe();
 		leds::inscribe();
-		STLIB::start(TCU_IP);
+		STLIB::start(ethernet::TCU_IP_STR);
 		state_machine::init();
 		pressure_sensor::setup_communication();
 		ethernet::start_datagram_socket();
-		ethernet::start_server_socket();
+		ethernet::init();
 		state_machine::board_start();
 	}
 

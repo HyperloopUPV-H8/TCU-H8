@@ -1,15 +1,32 @@
 #pragma once
 #include "TCU_ethernet/TCU_ethernet_common.hpp"
+#include "TCU_state_machine/TCU_state_machine.hpp"
 
 namespace ethernet{
 
-#define TCP_CLIENT_PORT 50401
-#define TCP_SERVER_PORT 50500
+#define TCP_CONNECTION_TIMEOUT_MILLISECONDS 30000
 
-ServerSocket *server_connection;
+#define START_PUMPING_ORDER_ID 1400
 
-void start_server_socket(){
-	server_connection = new ServerSocket((string)BACKEND_IP,TCP_SERVER_PORT);
+ServerSocket server_connection;
+
+void start_pumping();
+void stop_pumping();
+void emergency_state(){
+
+}
+
+//StackOrder<0> start_pumping_order;
+//StackOrder<0> stop_pumping_order;
+StackOrder<0> *emergency_state_order;
+
+void init(){
+	emergency_state_order = new StackOrder<0>(EMERGENCY_STATE_PACKET_ID,emergency_state);
+	server_connection = ServerSocket(TCU_IP,TCP_SERVER_PORT);
+}
+
+bool is_connected(){
+	return server_connection.state == ServerSocket::ServerState::ACCEPTED;
 }
 
 }

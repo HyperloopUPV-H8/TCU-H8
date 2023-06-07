@@ -14,11 +14,17 @@ namespace pressure_sensor {
 #define PRESSURE_SENSOR_MIN_BARS 0.0
 #define PRESSURE_SENSOR_MAX_OUTPUT 15099494.0
 #define PRESSURE_SENSOR_MIN_OUTPUT 1677722.0
-#define SENSOR_SETUP_TIMEOUT_MILLISECONDS 5000
-#define SENSOR_READ_TIMEOUT_MILLISECONDS 200
-#define SENSOR_PACKET_DELAY_MILLISECONDS 25
-#define SENSOR_PERIOD_BETWEEN_READS_MILLISECONDS 200
+#define SENSOR_SETUP_TIMEOUT_MILLISECONDS 5000000
+#define SENSOR_READ_TIMEOUT_MILLISECONDS 50
+#define SENSOR_PACKET_DELAY_MILLISECONDS 5
+#define SENSOR_PERIOD_BETWEEN_READS_MILLISECONDS 500
 #define MAX_CLONED_ARRAY_COUNT 5
+
+#define IDEAL_PRESSURE 1.0
+#define MIN_PRESSURE_PUMP 0.9
+#define MAX_PRESSURE_PUMP 1.1
+#define MIN_PRESSURE_FAULT 0.8
+#define MAX_PRESSURE_FAULT 1.2
 
 
 enum check_sensor_states{
@@ -45,23 +51,26 @@ double temperature_in_degrees = -274.0;
 uint8_t last_order_array[] = {0,0,0,0,0,0,0};
 uint8_t cloned_order_array_counter = 0;
 
-uint64_t sensor_packet_counter = 0;
+uint64_t sensor_packet_number = 0;
 uint8_t check_sensor_state = STARTING;
 uint8_t timeout_handler_id = 0;
 bool pending_communication = false;
 bool packet_ready = false;
 bool timed_out = false;
 bool failed_communication = false;
+bool two_consecutive_limit_measures = false;
+bool second_check = false;
 
 
-inline double get_pressure(){return pressure_in_bars;}
-inline double get_temperature(){return temperature_in_degrees;}
-inline bool get_communication_fault(){return failed_communication && COMMUNICATION_PROTECTION;}
+double get_pressure(){return pressure_in_bars;}
+double get_temperature(){return temperature_in_degrees;}
+bool get_communication_fault(){return failed_communication && COMMUNICATION_PROTECTION;}
 
-inline void set_pending_communication(){pending_communication=true;}
-inline void set_packet_ready(){packet_ready = true;}
-inline void set_timed_out(){timed_out = true;}
-inline bool communication_is_pending(){return pending_communication;}
+void set_pending_communication(){pending_communication=true;}
+void set_packet_ready(){packet_ready = true;}
+void set_timed_out(){timed_out = true;}
+void set_two_consecutive_limit_measures(){two_consecutive_limit_measures = true;}
+bool communication_is_pending(){return pending_communication;}
 
 
 /**
@@ -71,6 +80,15 @@ void calculate_pressure_temperature() {
 	pressure_in_bars = ((receive_i2c_order[3] * 1.0 + receive_i2c_order[2] * 256.0 + receive_i2c_order[1] * 65536.0) - PRESSURE_SENSOR_MIN_OUTPUT)
 		* (PRESSURE_SENSOR_MAX_BARS - PRESSURE_SENSOR_MIN_BARS) / (PRESSURE_SENSOR_MAX_OUTPUT - PRESSURE_SENSOR_MIN_OUTPUT) + PRESSURE_SENSOR_MIN_BARS;
 	temperature_in_degrees = ((receive_i2c_order[6] * 1.0 + receive_i2c_order[5] * 256.0 + receive_i2c_order[4] * 65536.0));
+}
+
+/**
+ * @brief 	check if pressure goes over max or under min safe values
+ *
+ * @retval	returns true if pressure goes over or under limits
+ */
+bool check_pressure_limits(){
+	return two_consecutive_limit_measures || pressure_in_bars < MIN_PRESSURE_FAULT || pressure_in_bars > MAX_PRESSURE_FAULT;
 }
 
 
@@ -106,7 +124,13 @@ bool check_array(){
 void check_sensor(){
 	if(!pending_communication){return;}
 	if(check_sensor_state == STARTING){
-		timeout_handler_id = Time::register_low_precision_alarm(SENSOR_READ_TIMEOUT_MILLISECONDS, [&](){set_timed_out();printf("timed out trying to communicate with TCU sensors \n");});
+		//timeout_handler_id = Time::register_low_precision_alarm(SENSOR_READ_TIMEOUT_MILLISECONDS, [&](){set_timed_out();printf("timed out trying to communicate with TCU sensors \n");});
+		uint64_t counter = sensor_packet_number;
+		Time::set_timeout(SENSOR_READ_TIMEOUT_MILLISECONDS, [&,counter](){
+			if(counter == sensor_packet_number){
+				set_timed_out();
+				printf("timed out trying to communicate with TCU sensors \n");
+			}});
 		check_sensor_state = SENDING_ORDER;
 	}
 	if(check_sensor_state == RESET){
@@ -149,11 +173,22 @@ void check_sensor(){
 				if(check_array()){
 					printf("Received too many copied values from the sensor, its not making new readings. Entering FAULT state \n");
 					failed_communication = true;
-					Time::unregister_low_precision_alarm(timeout_handler_id);
+					//Time::unregister_low_precision_alarm(timeout_handler_id);
 					return;
 				}
+				if(check_pressure_limits()){
+					if(second_check){
+						set_two_consecutive_limit_measures();
+					}
+					else{
+						second_check = true;
+						check_sensor_state = SENDING_ORDER;
+					}
+				}
 				pending_communication = false;
-				Time::unregister_low_precision_alarm(timeout_handler_id);
+				second_check = false;
+				//Time::unregister_low_precision_alarm(timeout_handler_id);
+				sensor_packet_number++;
 				check_sensor_state = STARTING;
 			break;
 		}
