@@ -13,8 +13,11 @@ namespace pressure_sensor {
 #define I2C_SENSOR_ID 0x28
 #define PRESSURE_SENSOR_MAX_BARS 1.0
 #define PRESSURE_SENSOR_MIN_BARS 0.0
-#define PRESSURE_SENSOR_MAX_OUTPUT 15099494.0
-#define PRESSURE_SENSOR_MIN_OUTPUT 1677722.0
+#define TEMPERATURE_SENSOR_MAX_DEGREES 150.0
+#define TEMPERATURE_SENSOR_MIN_DEGREES -50.0
+#define SENSOR_MAX_OUTPUT 15099494.0
+#define SENSOR_MIN_OUTPUT 1677722.0
+#define TEMPERATURE_SENSOR_SCALER 16777215
 #define SENSOR_SETUP_TIMEOUT_MILLISECONDS 5000000
 #define SENSOR_READ_TIMEOUT_MILLISECONDS 50
 #define SENSOR_PACKET_DELAY_MILLISECONDS 5
@@ -72,9 +75,10 @@ bool communication_is_pending(){return pending_communication;}
  * @brief	updates pressure_in_bars and and temperature_in_degrees using the value on receive_i2c_order
  */
 void calculate_pressure_temperature() {
-	pressure_in_bars = ((receive_i2c_order[3] * 1.0 + receive_i2c_order[2] * 256.0 + receive_i2c_order[1] * 65536.0) - PRESSURE_SENSOR_MIN_OUTPUT)
-		* (PRESSURE_SENSOR_MAX_BARS - PRESSURE_SENSOR_MIN_BARS) / (PRESSURE_SENSOR_MAX_OUTPUT - PRESSURE_SENSOR_MIN_OUTPUT) + PRESSURE_SENSOR_MIN_BARS;
-	temperature_in_degrees = ((receive_i2c_order[6] * 1.0 + receive_i2c_order[5] * 256.0 + receive_i2c_order[4] * 65536.0));
+	pressure_in_bars = ((receive_i2c_order[3] * 1.0 + receive_i2c_order[2] * 256.0 + receive_i2c_order[1] * 65536.0) - SENSOR_MIN_OUTPUT)
+		* (PRESSURE_SENSOR_MAX_BARS - PRESSURE_SENSOR_MIN_BARS) / (SENSOR_MAX_OUTPUT - SENSOR_MIN_OUTPUT) + PRESSURE_SENSOR_MIN_BARS;
+	temperature_in_degrees = ((receive_i2c_order[6] * 1.0 + receive_i2c_order[5] * 256.0 + receive_i2c_order[4] * 65536.0) *
+			(TEMPERATURE_SENSOR_MAX_DEGREES - TEMPERATURE_SENSOR_MIN_DEGREES) / TEMPERATURE_SENSOR_SCALER ) + TEMPERATURE_SENSOR_MIN_DEGREES;
 }
 
 /**
@@ -84,6 +88,10 @@ void calculate_pressure_temperature() {
  */
 bool check_pressure_limits(){
 	return two_consecutive_limit_measures || pressure_in_bars < MIN_PRESSURE_FAULT || pressure_in_bars > MAX_PRESSURE_FAULT;
+}
+
+bool check_temperature_limits(){
+	return two_consecutive_limit_measures || temperature_in_degrees < MIN_TEMPERATURE_FAULT || temperature_in_degrees > MAX_TEMPERATURE_FAULT;
 }
 
 
@@ -171,7 +179,7 @@ void check_sensor(){
 					//Time::unregister_low_precision_alarm(timeout_handler_id);
 					return;
 				}
-				if(check_pressure_limits()){
+				if(check_pressure_limits() || check_temperature_limits()){
 					if(second_check){
 						set_two_consecutive_limit_measures();
 					}

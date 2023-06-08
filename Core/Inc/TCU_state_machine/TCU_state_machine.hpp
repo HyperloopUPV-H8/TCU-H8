@@ -24,6 +24,10 @@ bool operational_fault_check(){
 		ErrorHandler("pressure on tube got over the safe limits, entering FAULT state");
 		return true;
 	}
+	if(pressure_sensor::check_temperature_limits()){
+		ErrorHandler("temperature on tube got over the safe limits, entering FAULT state");
+		return true;
+	}
 	if(pressure_sensor::get_communication_fault()){
 		ErrorHandler("Lost communication with TCU sensors, entering FAULT state");
 		return true;
@@ -110,7 +114,6 @@ void board_start(){
 
 void update(){
 	PrincipalStateMachine.check_transitions();
-	PumpStateMachine.check_transitions();
 }
 
 bool is_operational(){
