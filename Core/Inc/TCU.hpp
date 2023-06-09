@@ -8,7 +8,6 @@ namespace TCU{
 	static void start(){
 		pressure_sensor::inscribe();
 		leds::inscribe();
-		printf("hi");
 		STLIB::start(common::TCU_IP_STR);
 		state_machine::init();
 		pressure_sensor::setup_communication();
