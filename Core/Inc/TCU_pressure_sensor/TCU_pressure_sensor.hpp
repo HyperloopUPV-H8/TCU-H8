@@ -1,5 +1,4 @@
 #pragma once
-#include "ST-LIB.hpp"
 #include "TCU_common/TCU_common.hpp"
 
 namespace pressure_sensor {
@@ -82,7 +81,7 @@ void calculate_pressure_temperature() {
 }
 
 /**
- * @brief 	check if pressure goes over max or under min safe values
+ * @brief 	check if pressure goes over max (MAX_PRESSURE_FAULT) or under min (MIN_PRESSURE_FAULT) safe values
  *
  * @retval	returns true if pressure goes over or under limits
  */
@@ -90,6 +89,12 @@ bool check_pressure_limits(){
 	return two_consecutive_limit_measures || pressure_in_bars < MIN_PRESSURE_FAULT || pressure_in_bars > MAX_PRESSURE_FAULT;
 }
 
+
+/**
+ * @brief 	check if temperature goes over max (MAX_TEMPERATURE_FAULT) or under min safe values (MIN_TEMPERATURE_FAULT)
+ *
+ * @retval	returns true if temperature goes over or under limits
+ */
 bool check_temperature_limits(){
 	return two_consecutive_limit_measures || temperature_in_degrees < MIN_TEMPERATURE_FAULT || temperature_in_degrees > MAX_TEMPERATURE_FAULT;
 }
@@ -127,7 +132,6 @@ bool check_array(){
 void check_sensor(){
 	if(!pending_communication){return;}
 	if(check_sensor_state == STARTING){
-		//timeout_handler_id = Time::register_low_precision_alarm(SENSOR_READ_TIMEOUT_MILLISECONDS, [&](){set_timed_out();printf("timed out trying to communicate with TCU sensors \n");});
 		uint64_t counter = sensor_packet_number;
 		Time::set_timeout(SENSOR_READ_TIMEOUT_MILLISECONDS, [&,counter](){
 			if(counter == sensor_packet_number){
@@ -176,7 +180,6 @@ void check_sensor(){
 				if(check_array()){
 					printf("Received too many copied values from the sensor, its not making new readings. Entering FAULT state \n");
 					failed_communication = true;
-					//Time::unregister_low_precision_alarm(timeout_handler_id);
 					return;
 				}
 				if(check_pressure_limits() || check_temperature_limits()){
@@ -190,7 +193,6 @@ void check_sensor(){
 				}
 				pending_communication = false;
 				second_check = false;
-				//Time::unregister_low_precision_alarm(timeout_handler_id);
 				sensor_packet_number++;
 				check_sensor_state = STARTING;
 			break;

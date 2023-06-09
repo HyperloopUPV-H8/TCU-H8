@@ -1,18 +1,31 @@
 #pragma once
-#include "ST-LIB.hpp"
-#include "TCU_pressure_sensor/TCU_pressure_sensor.hpp"
 #include "TCU_state_machine/TCU_state_machine.hpp"
 
 namespace TCU{
 
+/**
+ * @brief 	methods to initialize TCU mean to be invoked before STLIB::start()
+ */
+void inscribe(){
+	pressure_sensor::inscribe();
+	leds::inscribe();
+	IMD::inscribe();
+}
+
+/**
+ * @brief	methods to initialize TCU meant to be invoked after STLIB::start()
+ */
+void init(){
+	state_machine::init();
+	ethernet::start_datagram_socket();
+	ethernet::init();
+}
+
 	static void start(){
-		pressure_sensor::inscribe();
-		leds::inscribe();
+		inscribe();
 		STLIB::start(common::TCU_IP_STR);
-		state_machine::init();
+		init();
 		pressure_sensor::setup_communication();
-		ethernet::start_datagram_socket();
-		ethernet::init();
 		state_machine::board_start();
 	}
 
