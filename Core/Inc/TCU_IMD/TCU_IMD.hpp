@@ -13,10 +13,10 @@ SensorInterrupt *IMD2;
 SensorInterrupt *IMD3;
 SensorInterrupt *IMD4;
 
-PinState *IMDState1 = new PinState;
-PinState *IMDState2 = new PinState;
-PinState *IMDState3 = new PinState;
-PinState *IMDState4 = new PinState;
+PinState *IMDState1 = new PinState(OFF);
+PinState *IMDState2 = new PinState(OFF);
+PinState *IMDState3 = new PinState(OFF);
+PinState *IMDState4 = new PinState(OFF);
 
 void inscribe(){
 	IMD1 = new SensorInterrupt(PG9,IMD_fault,IMDState1);

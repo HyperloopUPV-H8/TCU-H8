@@ -4,15 +4,17 @@
 
 namespace pump{
 
+DigitalOutput *pump;
+
 void init(){
-
+	pump = out::out1;
 }
 
-void pump_on(){
-
+void turn_on(){
+	pump->turn_on();
 }
 
-void pump_off(){
-
-	}
+void turn_off(){
+	pump->turn_off();
+}
 }

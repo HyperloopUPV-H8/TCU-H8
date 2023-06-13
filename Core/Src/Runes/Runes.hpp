@@ -279,7 +279,11 @@ uint32_t ADC::ranks[16] = {
 
 map<uint16_t, ExternalInterrupt::Instance> ExternalInterrupt::instances = {
 	{PE0.gpio_pin, Instance(EXTI0_IRQn)},
-	{PE1.gpio_pin, Instance(EXTI1_IRQn)}
+	{PE1.gpio_pin, Instance(EXTI1_IRQn)},
+	{PG9.gpio_pin, Instance(EXTI9_5_IRQn)},
+	{PG10.gpio_pin, Instance(EXTI15_10_IRQn)},
+	{PG12.gpio_pin, Instance(EXTI15_10_IRQn)},
+	{PG14.gpio_pin, Instance(EXTI15_10_IRQn)}
 };
 
 #endif

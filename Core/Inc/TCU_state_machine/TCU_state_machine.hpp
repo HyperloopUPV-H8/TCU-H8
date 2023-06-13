@@ -1,11 +1,12 @@
 #pragma once
+#include "TCU_leds/TCU_board_leds.hpp"
 #include "TCU_common/TCU_common.hpp"
-#include "TCU_leds/TCU_leds.hpp"
 #include "TCU_pressure_sensor/TCU_pressure_sensor.hpp"
 #include "TCU_ethernet/TCU_ethernet_udp.hpp"
 #include "TCU_ethernet/TCU_ethernet_tcp.hpp"
 #include "TCU_pump/TCU_pump.hpp"
 #include "TCU_IMD/TCU_IMD.hpp"
+#include "TCU_tube_illumination/TCU_tube_illumination.hpp"
 using namespace std::chrono_literals;
 
 
@@ -56,12 +57,14 @@ bool over_under_check(){
 //##########################-----entry methods-----###############################
 
 void entry_operational(){
-	leds::operational_led->turn_on();
+	board_leds::operational_led->turn_on();
+	illumination::turn_on();
 }
 
 void entry_fault(){
-	leds::turn_off_all();
-	leds::fault_led->turn_on();
+	board_leds::turn_off_all();
+	board_leds::fault_led->turn_on();
+	pump::turn_off();
 }
 
 

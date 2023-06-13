@@ -1,7 +1,7 @@
 #pragma once
-#include "ST-LIB.hpp"
+#include "TCU_common/TCU_common.hpp"
 
-namespace leds{
+namespace board_leds{
 
 DigitalOutput *operational_led;
 DigitalOutput *fault_led;

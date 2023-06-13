@@ -8,14 +8,17 @@ namespace TCU{
  */
 void inscribe(){
 	pressure_sensor::inscribe();
-	leds::inscribe();
+	board_leds::inscribe();
+	illumination::inscribe();
 	IMD::inscribe();
+	out::inscribe();
 }
 
 /**
  * @brief	methods to initialize TCU meant to be invoked after STLIB::start()
  */
 void init(){
+	pump::init();
 	state_machine::init();
 	ethernet::start_datagram_socket();
 	ethernet::init();
