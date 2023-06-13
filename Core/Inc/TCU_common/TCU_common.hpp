@@ -42,8 +42,9 @@ enum principal_state_machine_states{
 
 enum pump_state_machine_states{
 	IDLE,
-	OVER,
-	UNDER,
+	FIRST_PUMPING,
+	READY,
+	PUMPING,
 };
 
 

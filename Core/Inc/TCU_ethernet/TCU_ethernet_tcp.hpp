@@ -12,7 +12,7 @@ namespace ethernet{
 ServerSocket server_connection;
 
 void start_pumping(){
-	common::set_pumping_state(common::OVER);
+	common::set_pumping_state(common::FIRST_PUMPING);
 }
 void stop_pumping(){
 	common::set_pumping_state(common::IDLE);

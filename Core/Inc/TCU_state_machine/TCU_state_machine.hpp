@@ -23,8 +23,8 @@ bool initial_timeout = false;
 //####################-----check transition methods-----###########################
 
 bool operational_fault_check(){
-	if(pressure_sensor::check_pressure_limits()){
-		ErrorHandler("pressure on tube got over the safe limits, entering FAULT state");
+	if(pressure_sensor::check_pressure_limits() && is_ready()){
+		ErrorHandler("pressure on tube got over the safe limits while TCU pumping system was running, entering FAULT state");
 		return true;
 	}
 	if(pressure_sensor::check_temperature_limits()){
@@ -32,7 +32,7 @@ bool operational_fault_check(){
 		return true;
 	}
 	if(pressure_sensor::get_communication_fault()){
-		ErrorHandler("Lost communication with TCU sensors, entering FAULT state");
+		ErrorHandler("Lost communication with TCU sensors while TCU was operating, entering FAULT state");
 		return true;
 	}
 	return false;
@@ -46,11 +46,15 @@ bool initial_fault_check(){
 	return pressure_sensor::get_communication_fault() || initial_timeout;
 }
 
-bool under_over_check(){
+bool ready_pumping_check(){
 	return pressure_sensor::get_pressure() > MAX_PRESSURE_PUMP;
 }
 
-bool over_under_check(){
+bool pumping_ready_check(){
+	return pressure_sensor::get_pressure() <= IDEAL_PRESSURE;
+}
+
+bool first_pumping_ready_check(){
 	return pressure_sensor::get_pressure() <= IDEAL_PRESSURE;
 }
 
@@ -75,8 +79,9 @@ void add_transitions(){
 	PrincipalStateMachine.add_transition(common::OPERATIONAL,common::FAULT,operational_fault_check);
 	PrincipalStateMachine.add_transition(common::INITIAL,common::OPERATIONAL,initial_operational_check);
 	PrincipalStateMachine.add_transition(common::INITIAL,common::FAULT,initial_fault_check);
-	PumpStateMachine.add_transition(common::UNDER,common::OVER,under_over_check);
-	PumpStateMachine.add_transition(common::OVER,common::UNDER,over_under_check);
+	PumpStateMachine.add_transition(common::READY,common::PUMPING,ready_pumping_check);
+	PumpStateMachine.add_transition(common::PUMPING,common::READY,pumping_ready_check);
+	PumpStateMachine.add_transition(common::FIRST_PUMPING,common::READY,first_pumping_ready_check);
 }
 
 void add_entry(){
@@ -98,8 +103,8 @@ void init(){
 	ProtectionManager::link_state_machine(PrincipalStateMachine, common::FAULT);
 	ProtectionManager::set_id(Boards::ID::TCU);
 	PumpStateMachine.add_state(common::IDLE);
-	PumpStateMachine.add_state(common::OVER);
-	PumpStateMachine.add_state(common::UNDER);
+	PumpStateMachine.add_state(common::PUMPING);
+	PumpStateMachine.add_state(common::READY);
 	PrincipalStateMachine.add_state_machine(PumpStateMachine, common::OPERATIONAL);
 	add_transitions();
 	add_entry();
@@ -123,6 +128,10 @@ void update(){
 
 bool is_operational(){
 	return PrincipalStateMachine.current_state == common::OPERATIONAL;
+}
+
+bool is_ready(){
+	return PumpStateMachine.current_state == common::READY || PumpStateMachine.current_state == common::PUMPING;
 }
 
 
