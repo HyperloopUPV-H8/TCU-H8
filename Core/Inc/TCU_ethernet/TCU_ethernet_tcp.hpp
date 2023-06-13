@@ -7,8 +7,6 @@ using namespace common;
 
 namespace ethernet{
 
-#define TCP_CONNECTION_TIMEOUT_MILLISECONDS 30000
-
 ServerSocket server_connection;
 
 void start_pumping(){

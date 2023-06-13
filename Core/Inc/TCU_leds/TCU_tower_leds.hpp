@@ -16,6 +16,13 @@ void init(){
 	blue_led = out::out8;
 }
 
+void turn_off_all(){
+	green_led->turn_off();
+	orange_led->turn_off();
+	red_led->turn_off();
+	blue_led->turn_off();
+}
+
 void turn_green(){
 	turn_off_all();
 	green_led->turn_on();
@@ -34,13 +41,6 @@ void turn_red(){
 void turn_blue(){
 	turn_off_all();
 	blue_led->turn_on();
-}
-
-void turn_off_all(){
-	green_led->turn_off();
-	orange_led->turn_off();
-	red_led->turn_off();
-	blue_led->turn_off();
 }
 
 }

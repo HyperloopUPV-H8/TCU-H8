@@ -8,6 +8,7 @@ namespace TCU{
  */
 void inscribe(){
 	pressure_sensor::inscribe();
+	emergency_button::inscribe();
 	board_leds::inscribe();
 	illumination::inscribe();
 	IMD::inscribe();
@@ -19,6 +20,7 @@ void inscribe(){
  */
 void init(){
 	pump::init();
+	tower_leds::init();
 	state_machine::init();
 	ethernet::start_datagram_socket();
 	ethernet::init();
