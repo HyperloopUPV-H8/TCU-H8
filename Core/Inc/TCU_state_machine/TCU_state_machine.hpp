@@ -23,6 +23,7 @@ bool initial_timeout = false;
 //####################-----check transition methods-----###########################
 
 bool operational_fault_check(){
+	/*
 	if(pressure_sensor::check_pressure_limits() && is_ready()){
 		ErrorHandler("pressure on tube got over the safe limits while TCU pumping system was running, entering FAULT state");
 		return true;
@@ -30,7 +31,7 @@ bool operational_fault_check(){
 	if(pressure_sensor::check_temperature_limits()){
 		ErrorHandler("temperature on tube got over the safe limits, entering FAULT state");
 		return true;
-	}
+	}*/
 	if(pressure_sensor::get_communication_fault()){
 		ErrorHandler("Lost communication with TCU sensors while TCU was operating, entering FAULT state");
 		return true;
