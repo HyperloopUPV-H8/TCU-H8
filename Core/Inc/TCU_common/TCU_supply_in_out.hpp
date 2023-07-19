@@ -2,7 +2,6 @@
 #include "TCU_common/TCU_common.hpp"
 
 namespace out{
-
 DigitalOutput *out1;
 DigitalOutput *out2;
 DigitalOutput *out3;
@@ -11,6 +10,7 @@ DigitalOutput *out5;
 DigitalOutput *out6;
 DigitalOutput *out7;
 DigitalOutput *out8;
+
 
 	void inscribe(){
 		out1 = new DigitalOutput(PE11);
@@ -30,4 +30,23 @@ DigitalOutput *out8;
 		out7->turn_off();
 		out8->turn_off();
 	}
+}
+
+namespace in{
+SensorInterrupt *in1;
+SensorInterrupt *in2;
+SensorInterrupt *in3;
+SensorInterrupt *in4;
+PinState in1_value;
+PinState in2_value;
+PinState in3_value;
+PinState in4_value;
+
+void inscribe(){
+	in1 = new SensorInterrupt(PG9,common::send_to_fault,&in1_value);
+	in2 = new SensorInterrupt(PG10,common::recover_from_fault,&in2_value);
+	in3 = new SensorInterrupt(PG12,common::empty_function,&in3_value);
+	in4 = new SensorInterrupt(PG14,common::empty_function,&in4_value);
+}
+
 }

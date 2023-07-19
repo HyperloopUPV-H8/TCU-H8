@@ -19,11 +19,11 @@ void inscribe(){
  * @brief	methods to initialize TCU meant to be invoked after STLIB::start()
  */
 void init(){
+	ethernet::start_datagram_socket();
+	ethernet::init();
 	pump::init();
 	tower_leds::init();
 	state_machine::init();
-	ethernet::start_datagram_socket();
-	ethernet::init();
 }
 
 	static void start(){
@@ -45,9 +45,19 @@ void init(){
 
 namespace common{
 
+void warn(string warning){
+	ProtectionManager::warn(warning);
+}
+
 void send_to_fault(){
 	state_machine::force_fault();
 }
+
+void recover_from_fault(){
+	HAL_NVIC_SystemReset();
+}
+
+void empty_function(){}
 
 principal_state_machine_states get_principal_state(){
 	return (principal_state_machine_states)state_machine::PrincipalStateMachine.current_state;

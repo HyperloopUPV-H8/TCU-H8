@@ -1,6 +1,5 @@
 #pragma once
 #include "ST-LIB.hpp"
-#include "TCU_common/TCU_supply_out.hpp"
 
 namespace common{
 
@@ -18,7 +17,7 @@ namespace common{
 #define TCP_CLIENT_PORT 50401
 #define TCP_SERVER_PORT 50500
 #define UDP_PORT 50400
-#define TCP_CONNECTION_TIMEOUT_MILLISECONDS 2000
+#define TCP_CONNECTION_TIMEOUT_MILLISECONDS 3600000
 
 #define START_PUMPING_PACKET_ID 1400
 #define STOP_PUMPING_PACKET_ID 1401
@@ -51,8 +50,10 @@ enum pump_state_machine_states{
 
 //###################-----enum of functions-----###########################
 
-//function<void()> send_to_fault = [](){};
+void warn(string warning);
 void send_to_fault();
+void recover_from_fault();
+void empty_function();
 principal_state_machine_states get_principal_state();
 pump_state_machine_states get_pump_state();
 void set_pumping_state(pump_state_machine_states state);

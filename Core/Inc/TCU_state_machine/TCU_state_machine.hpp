@@ -65,13 +65,26 @@ bool first_pumping_ready_check(){
 
 void entry_operational(){
 	board_leds::operational_led->turn_on();
+	tower_leds::turn_off_all();
+	tower_leds::turn_green();
 	illumination::turn_on();
 }
 
 void entry_fault(){
 	board_leds::turn_off_all();
 	board_leds::fault_led->turn_on();
+	tower_leds::turn_off_all();
+	tower_leds::turn_red();
 	pump::turn_off();
+	illumination::turn_off();
+}
+
+void entry_idle(){
+	tower_leds::turn_off_orange();
+}
+
+void exit_idle(){
+	tower_leds::turn_orange();
 }
 
 

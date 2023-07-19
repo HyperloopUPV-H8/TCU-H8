@@ -7,7 +7,7 @@ namespace pressure_sensor {
 
 #define MAX_UINT64 18446744073709551615U
 
-#define COMMUNICATION_PROTECTION false
+#define COMMUNICATION_PROTECTION true
 #define I2C_SENSOR_BUSY_MASK 0x20
 #define I2C_SENSOR_ID 0x28
 #define PRESSURE_SENSOR_MAX_BARS 1.0
@@ -17,7 +17,7 @@ namespace pressure_sensor {
 #define SENSOR_MAX_OUTPUT 15099494.0
 #define SENSOR_MIN_OUTPUT 1677722.0
 #define TEMPERATURE_SENSOR_SCALER 16777215
-#define SENSOR_SETUP_TIMEOUT_MILLISECONDS 5000000
+#define SENSOR_SETUP_TIMEOUT_MILLISECONDS 2000
 #define SENSOR_READ_TIMEOUT_MILLISECONDS 200
 #define SENSOR_PACKET_DELAY_MILLISECONDS 5
 #define SENSOR_PERIOD_BETWEEN_READS_MILLISECONDS 500
@@ -222,15 +222,17 @@ void inscribe(){
 void setup_communication(){
 	check_sensor_state = SENDING_ORDER;
 	pending_communication = true;
-	uint8_t timeout_alarm = Time::register_low_precision_alarm(SENSOR_SETUP_TIMEOUT_MILLISECONDS, [&](){set_timed_out();printf("failed to communicate with TCU sensor in start up \n");});
+	uint8_t timeout_alarm = Time::register_low_precision_alarm(SENSOR_SETUP_TIMEOUT_MILLISECONDS, [&](){set_timed_out();});
 	uint8_t check_sensor_alarm = Time::register_low_precision_alarm(SENSOR_PACKET_DELAY_MILLISECONDS, [&](){
 		packet_ready = true;
 
 	});
 	while(check_sensor_state != FINISHED && COMMUNICATION_PROTECTION){
 		check_sensor();
+		STLIB::update();
 		if(timed_out){
-			break;
+			common::warn("TCU cannot communicate with TCU_Sensors. Waiting for connection...");
+			timed_out = false;
 		}
 	}
 	Time::unregister_low_precision_alarm(timeout_alarm);
