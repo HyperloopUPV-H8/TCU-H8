@@ -7,10 +7,14 @@
 
 int main(void)
 {
+	DigitalOutput errorhandlerled(PB0);
 	TCU::start();
 
 	while(1) {
 		TCU::update();
+		if(ErrorHandlerModel::error_triggered){
+			errorhandlerled.turn_on();
+		}
 	}
 }
 

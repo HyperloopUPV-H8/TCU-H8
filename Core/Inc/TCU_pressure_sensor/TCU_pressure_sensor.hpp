@@ -7,7 +7,7 @@ namespace pressure_sensor {
 
 #define MAX_UINT64 18446744073709551615U
 
-#define COMMUNICATION_PROTECTION true
+#define COMMUNICATION_PROTECTION false
 #define I2C_SENSOR_BUSY_MASK 0x20
 #define I2C_SENSOR_ID 0x28
 #define PRESSURE_SENSOR_MAX_BARS 1.0
@@ -227,7 +227,7 @@ void setup_communication(){
 		packet_ready = true;
 
 	});
-	while(check_sensor_state != FINISHED){
+	while(check_sensor_state != FINISHED && COMMUNICATION_PROTECTION){
 		check_sensor();
 		if(timed_out){
 			break;

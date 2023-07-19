@@ -108,6 +108,7 @@ void init(){
 	PumpStateMachine.add_state(common::IDLE);
 	PumpStateMachine.add_state(common::PUMPING);
 	PumpStateMachine.add_state(common::READY);
+	PumpStateMachine.add_state(common::FIRST_PUMPING);
 	PrincipalStateMachine.add_state_machine(PumpStateMachine, common::OPERATIONAL);
 	add_transitions();
 	add_entry();
