@@ -9,9 +9,9 @@ DigitalOutput *orange_led; //on and working
 DigitalOutput *red_led; //FAULT state
 
 void init(){
-	green_led = out::out5;
-	orange_led = out::out6;
-	red_led = out::out7;
+	green_led = out::out1;
+	orange_led = out::out2;
+	red_led = out::out3;
 }
 
 void turn_off_all(){

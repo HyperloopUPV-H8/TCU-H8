@@ -10,9 +10,8 @@ void inscribe(){
 	pressure_sensor::inscribe();
 	emergency_button::inscribe();
 	board_leds::inscribe();
-	illumination::inscribe();
-	IMD::inscribe();
 	out::inscribe();
+	in::inscribe();
 }
 
 /**
@@ -22,6 +21,7 @@ void init(){
 	ethernet::start_datagram_socket();
 	ethernet::init();
 	pump::init();
+	illumination::init();
 	tower_leds::init();
 	state_machine::init();
 }

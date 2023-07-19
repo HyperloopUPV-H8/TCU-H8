@@ -7,7 +7,7 @@ namespace pump{
 DigitalOutput *pump;
 
 void init(){
-	pump = out::out1;
+	pump = out::out4;
 }
 
 void turn_on(){

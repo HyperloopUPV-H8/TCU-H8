@@ -1,13 +1,13 @@
 #pragma once
-#include "TCU_common/TCU_common.hpp"
+#include "TCU_common/TCU_supply_in_out.hpp"
 
 
 namespace illumination{
 
 DigitalOutput *tube_leds;
 
-void inscribe(){
-	tube_leds = new DigitalOutput(PB12);
+void init(){
+	tube_leds = out::out5;
 }
 
 void turn_on(){
