@@ -7,14 +7,16 @@
 
 int main(void)
 {
-	DigitalOutput errorhandlerled(PB0);
+	if (not __HAL_RCC_GET_FLAG(RCC_FLAG_SFTRST)) HAL_NVIC_SystemReset();
+		static_assert(HSE_VALUE == 25000000UL);
+	#ifndef BOARD
+		static_assert(false, "BOARD has to be declared as a symbol");
+	#endif
+
 	TCU::start();
 
 	while(1) {
 		TCU::update();
-		if(ErrorHandlerModel::error_triggered){
-			errorhandlerled.turn_on();
-		}
 	}
 }
 

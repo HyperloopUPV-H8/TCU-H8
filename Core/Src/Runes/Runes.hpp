@@ -157,7 +157,6 @@ vector<reference_wrapper<TimerPeripheral>> TimerPeripheral::timers = {
 #define PHASED TimerPeripheral::PWM_MODE::PHASED
 
 PWMmap TimerPeripheral::available_pwm  = {
-	{PB14, {timer12, {TIM_CHANNEL_1, NORMAL}}},
 	{PB15, {timer12, {TIM_CHANNEL_2, NORMAL}}},
 	{PB4, {timer3, {TIM_CHANNEL_1, PHASED}}},
 	{PB5, {timer3, {TIM_CHANNEL_2, NORMAL}}},

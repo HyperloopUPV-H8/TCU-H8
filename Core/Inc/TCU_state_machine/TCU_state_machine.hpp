@@ -67,6 +67,7 @@ void entry_operational(){
 	board_leds::operational_led->turn_on();
 	tower_leds::turn_off_all();
 	tower_leds::turn_green();
+	tower_leds::turn_orange();
 	illumination::turn_on();
 }
 
@@ -107,7 +108,6 @@ void add_entry(){
 
 void add_cyclic(){
 	Time::register_low_precision_alarm(16, ethernet::set_pending_communication);
-	//PrincipalStateMachine.add_low_precision_cyclic_action(ethernet::set_pending_communication, 16ms,common::OPERATIONAL);
 	PrincipalStateMachine.add_low_precision_cyclic_action(pressure_sensor::set_pending_communication, std::chrono::milliseconds(SENSOR_PERIOD_BETWEEN_READS_MILLISECONDS),common::OPERATIONAL);
 	PrincipalStateMachine.add_low_precision_cyclic_action(pressure_sensor::set_packet_ready, std::chrono::milliseconds(SENSOR_PACKET_DELAY_MILLISECONDS),common::OPERATIONAL);
 }
