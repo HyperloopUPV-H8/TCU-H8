@@ -10,6 +10,7 @@ DigitalOutput *out5;
 DigitalOutput *out6;
 DigitalOutput *out7;
 DigitalOutput *out8;
+DigitalOutput *outi;
 
 
 	void inscribe(){
@@ -21,6 +22,7 @@ DigitalOutput *out8;
 		out6 = new DigitalOutput(PB15);
 		out7 = new DigitalOutput(PD12);
 		out8 = new DigitalOutput(PD13);
+		outi = new DigitalOutput(PB12);
 		out1->turn_off();
 		out2->turn_off();
 		out3->turn_off();
@@ -29,6 +31,7 @@ DigitalOutput *out8;
 		out6->turn_off();
 		out7->turn_off();
 		out8->turn_off();
+		outi->turn_off();
 	}
 }
 

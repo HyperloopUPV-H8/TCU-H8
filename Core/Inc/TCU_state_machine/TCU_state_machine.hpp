@@ -67,7 +67,6 @@ void entry_operational(){
 	board_leds::operational_led->turn_on();
 	tower_leds::turn_off_all();
 	tower_leds::turn_green();
-	tower_leds::turn_orange();
 	illumination::turn_on();
 }
 
@@ -104,6 +103,8 @@ void add_transitions(){
 void add_entry(){
 	PrincipalStateMachine.add_enter_action(entry_fault, common::FAULT);
 	PrincipalStateMachine.add_enter_action(entry_operational, common::OPERATIONAL);
+	PumpStateMachine.add_enter_action(entry_idle, common::IDLE);
+	PumpStateMachine.add_exit_action(exit_idle, common::IDLE);
 }
 
 void add_cyclic(){

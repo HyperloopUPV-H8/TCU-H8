@@ -7,7 +7,7 @@ namespace illumination{
 DigitalOutput *tube_leds;
 
 void init(){
-	tube_leds = out::out5;
+	tube_leds = out::outi;
 }
 
 void turn_on(){
