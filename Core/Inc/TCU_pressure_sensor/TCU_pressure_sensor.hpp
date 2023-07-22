@@ -150,6 +150,7 @@ void check_sensor(){
 	if(packet_ready){
 		switch(check_sensor_state){
 			case SENDING_ORDER:
+				common::i2c_led_off();
 				if(I2C::transmit_next_packet_polling(i2c_handler_id,*check_order_packet)){
 					check_sensor_state = WAITING_FLAG;
 					}else{
@@ -194,6 +195,7 @@ void check_sensor(){
 				pending_communication = false;
 				second_check = false;
 				sensor_packet_number++;
+				common::i2c_led_on();
 				check_sensor_state = STARTING;
 			break;
 		}
@@ -210,7 +212,7 @@ void check_sensor(){
  * @brief 	handles all inscribes and pre-start actions for the communication to work
  */
 void inscribe(){
-	i2c_handler_id = I2C::inscribe(I2C::i2c2);
+	i2c_handler_id = I2C::inscribe(I2C::i2c2,0x10);
 }
 
 

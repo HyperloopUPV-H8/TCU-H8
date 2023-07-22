@@ -52,6 +52,8 @@ void warn(string warning);
 void send_to_fault();
 void recover_from_fault();
 void empty_function();
+void i2c_led_on();
+void i2c_led_off();
 principal_state_machine_states get_principal_state();
 pump_state_machine_states get_pump_state();
 void set_pumping_state(pump_state_machine_states state);

@@ -70,6 +70,12 @@ void set_pumping_state(pump_state_machine_states state){
 	state_machine::PumpStateMachine.force_change_state(state);
 }
 
+void i2c_led_on(){
+	board_leds::can_led->turn_on();
+}
 
+void i2c_led_off(){
+	board_leds::can_led->turn_off();
+}
 
 }
