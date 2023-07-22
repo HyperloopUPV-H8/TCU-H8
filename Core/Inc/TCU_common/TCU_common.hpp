@@ -6,11 +6,9 @@ namespace common{
 
 //#######################-----constants-----############################
 
-#define IDEAL_PRESSURE 1.0
-#define MIN_PRESSURE_PUMP 0.9
-#define MAX_PRESSURE_PUMP 1.1
-#define MIN_PRESSURE_FAULT 0.8
-#define MAX_PRESSURE_FAULT 1.2
+#define IDEAL_PRESSURE 0.1
+#define MAX_PRESSURE_PUMP 0.12
+#define MAX_PRESSURE_FAULT 0.15
 #define MIN_TEMPERATURE_FAULT 0.0
 #define MAX_TEMPERATURE_FAULT 70.0
 

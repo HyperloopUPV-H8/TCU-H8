@@ -8,7 +8,6 @@ namespace TCU{
  */
 void inscribe(){
 	pressure_sensor::inscribe();
-	emergency_button::inscribe();
 	board_leds::inscribe();
 	out::inscribe();
 	in::inscribe();

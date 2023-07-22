@@ -18,8 +18,8 @@ namespace pressure_sensor {
 #define SENSOR_MIN_OUTPUT 1677722.0
 #define TEMPERATURE_SENSOR_SCALER 16777215
 #define SENSOR_SETUP_TIMEOUT_MILLISECONDS 2000
-#define SENSOR_READ_TIMEOUT_MILLISECONDS 200
-#define SENSOR_PACKET_DELAY_MILLISECONDS 5
+#define SENSOR_READ_TIMEOUT_MILLISECONDS 450
+#define SENSOR_PACKET_DELAY_MILLISECONDS 50
 #define SENSOR_PERIOD_BETWEEN_READS_MILLISECONDS 500
 #define MAX_CLONED_ARRAY_COUNT 5
 
@@ -86,7 +86,7 @@ void calculate_pressure_temperature() {
  * @retval	returns true if pressure goes over or under limits
  */
 bool check_pressure_limits(){
-	return two_consecutive_limit_measures || pressure_in_bars < MIN_PRESSURE_FAULT || pressure_in_bars > MAX_PRESSURE_FAULT;
+	return two_consecutive_limit_measures ||pressure_in_bars > MAX_PRESSURE_FAULT;
 }
 
 
